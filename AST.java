@@ -12,23 +12,23 @@ public class AST implements Parser{
     private void DECLARATION(){
         if(hayErrores)
             return;
-        switch (preanalisis.tipo) {
-            case FUN ->{
+        switch (preanalisis.tipo){
+            case FUN:
                 System.out.println("Entro al case FUN");
                 FUN_DECL();
                 DECLARATION();
-            }
-            case VAR ->{
+            break;
+            case VAR:
                 System.out.println("Entro al case VAR");
                 VAR_DECL();
                 DECLARATION();
-            }
 
-            case TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_BRACE ->{
+            break;
+            case TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_BRACE:
                 System.out.println("Entro al case 3");
                 STATEMENT();
                 DECLARATION();
-            }
+            break;
         }
     }
 
@@ -44,11 +44,15 @@ public class AST implements Parser{
     }
 
     private void VAR_DECL(){
+        System.out.println("Entramos a VAR_INIT PRENASLISIS: "+preanalisis.tipo);
         if(preanalisis.tipo==TipoToken.VAR){
             match(TipoToken.VAR);
+            System.out.println("Prenalisis"+preanalisis.tipo);
             match(TipoToken.IDENTIFIER);
+            System.out.println("Prenalisis"+preanalisis.tipo);
             if(preanalisis.tipo==TipoToken.EQUAL){
                 VAR_INIT();
+                System.out.println("Entramos a VAR_INIT con =");
             }
             match(TipoToken.SEMICOLON);
         }else{
@@ -116,10 +120,12 @@ public class AST implements Parser{
     }
 
     private void VAR_INIT(){
+        System.out.println("dentro VAR_INIT Prenalisis: "+preanalisis.tipo);
         if(hayErrores)
             return;
         if(preanalisis.tipo==TipoToken.EQUAL){
               match(TipoToken.EQUAL);
+              System.out.println("Dentro de VAR_INIT");
               EXPRESSION();
         }else{
             System.out.println("Error: Se esoeraba un =");
@@ -129,20 +135,22 @@ public class AST implements Parser{
     private void EXPRESSION(){
         if(hayErrores)
             return;
+        System.out.println("Dentro de EXPRESSION");
         ASSIGNMENT();
+        System.out.println("Fuera de EXPRESSION");
     }
 
     private void ASSIGNMENT(){
+        System.out.println("Dentro de ASSIGNMENT PRENALISIS: "+preanalisis.tipo);
         if(hayErrores)
             return;
         switch (preanalisis.tipo) {
-            case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+            case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN ->{
+                System.out.println("Dentro de ASSIGNMENT");
                 LOGIC_OR();
                 ASSIGNMENT_OPC();
-                break;
+               }
         
-            default:
-                break;
         }
     }
 
@@ -151,6 +159,7 @@ public class AST implements Parser{
             return;
         switch (preanalisis.tipo) {
             case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+                System.out.println("Dentro de LOGIC_OR");
                 LOGIC_AND();
                 LOGIC_OR_2();
                 break;
@@ -175,6 +184,7 @@ public class AST implements Parser{
             return;
         switch (preanalisis.tipo) {
             case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+                System.out.println("Dentro de LOGIC_AND");
                 EQUALITY();
                 LOGIC_AND_2();
                 break;
@@ -199,6 +209,7 @@ public class AST implements Parser{
             return;
         switch (preanalisis.tipo) {
             case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+                System.out.println("Dentro de EQUALITY");
                 COMPARISON();
                 EQUALITY_2();
                 break;
@@ -224,6 +235,7 @@ public class AST implements Parser{
             return;
         switch (preanalisis.tipo) {
             case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+                System.out.println("Dentro de COMPARISON");
                 TERM();
                 COMPARISON_2();
                 break;
@@ -259,6 +271,7 @@ public class AST implements Parser{
             return;
         switch (preanalisis.tipo) {
             case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+                System.out.println("Dentro de TERM");
                 FACTOR();
                 TERM_2();
                 break;
@@ -292,6 +305,7 @@ public class AST implements Parser{
             return;
         switch (preanalisis.tipo) {
             case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+                System.out.println("Dentro de FACTOR");
                 UNARY();
                 FACTOR_2();
                 break;
@@ -319,19 +333,23 @@ public class AST implements Parser{
     }
 
     private void UNARY(){
+        System.out.println("Dentro de UNARY");
         if(hayErrores)
             return;
         switch (preanalisis.tipo) {
             case BANG:
+            System.out.println("Dentro de UNARY CASE: BANG");
                 match(TipoToken.BANG);
                 UNARY();
                 break;
 
             case MINUS:
-                match(TipoToken.BANG);
+                match(TipoToken.MINUS);
+                System.out.println("Dentro de UNARY CASE: MINUS");
                 UNARY();
                 break;
             case TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+            System.out.println("Dentro de UNARY CASE: TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN");
                 CALL();
                 break;
         
@@ -341,6 +359,7 @@ public class AST implements Parser{
     }
 
     private void CALL(){
+        System.out.println("Dentro de  CALL");
         if(hayErrores)
             return;
         switch (preanalisis.tipo) {
@@ -382,34 +401,42 @@ public class AST implements Parser{
     }
 
     private void PRIMARY(){
+        System.out.println("Dentro de PRIMARY");
         if(hayErrores)
             return;
         switch (preanalisis.tipo) {
             case TRUE:
                 match(TipoToken.TRUE);
+                System.out.println("Dentro de PRIMARY CASE:PRIMARY");
                 break;
 
             case FALSE:
                 match(TipoToken.FALSE);
+                System.out.println("Dentro de PRIMARY CASE:FALSE");
                 break;
 
             case NULL:
                 match(TipoToken.NULL);
+                System.out.println("Dentro de PRIMARY CASE:NULL");
                 break;
 
             case NUMBER:
                 match(TipoToken.NUMBER);
+                System.out.println("Dentro de PRIMARY CASE:NUMBER");
                 break;
 
             case STRING:
                 match(TipoToken.STRING);
+                System.out.println("Dentro de PRIMARY CASE:STRING");
                 break;
 
             case IDENTIFIER:
                 match(TipoToken.IDENTIFIER);
+                System.out.println("Dentro de PRIMARY CASE:IDENTIFIER");
                 break;
             
             case LEFT_PAREN:
+                System.out.println("Dentro de PRIMARY CASE:LEFT_PAREN");
                 match(TipoToken.LEFT_PAREN);
                 EXPRESSION();
                 match(TipoToken.RIGHT_PAREN);
@@ -437,7 +464,6 @@ public class AST implements Parser{
                 }
             } else {
                 hayErrores = true;
-                System.out.println("Error localizado: Se esperaba " + tt + " pero se encontró " + preanalisis.tipo + " en el índice " + i);
             }
         }
     }
