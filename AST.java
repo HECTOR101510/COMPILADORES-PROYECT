@@ -22,7 +22,6 @@ public class AST implements Parser{
                 System.out.println("Entro al case VAR");
                 VAR_DECL();
                 DECLARATION();
-
             break;
             case TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_BRACE:
                 System.out.println("Entro al case 3");
@@ -72,9 +71,6 @@ public class AST implements Parser{
             PARAMETERS_OPC();
             match(TipoToken.RIGHT_BRACE);
             BLOCK();
-        }else{
-            hayErrores=true;
-            System.out.println("Error localizado");
         }
     }
 
@@ -90,9 +86,6 @@ public class AST implements Parser{
         if(preanalisis.tipo==TipoToken.IDENTIFIER){
             match(TipoToken.IDENTIFIER);
             PARAMETERS_2();
-        }else{
-            hayErrores=true;
-            System.out.println("Se esperaba un ID");
         }
     }
 
@@ -127,8 +120,6 @@ public class AST implements Parser{
               match(TipoToken.EQUAL);
               System.out.println("Dentro de VAR_INIT");
               EXPRESSION();
-        }else{
-            System.out.println("Error: Se esoeraba un =");
         }
     }
 
@@ -239,9 +230,6 @@ public class AST implements Parser{
                 TERM();
                 COMPARISON_2();
                 break;
-        
-            default:
-                break;
         }
     }
         private void COMPARISON_2(){
@@ -294,10 +282,6 @@ public class AST implements Parser{
             FACTOR();
             TERM_2();
         }
-        else{
-            hayErrores=true;
-            System.out.println("Error:Se esperaba un + o  -");
-        }
     }
 
     private void FACTOR(){
@@ -308,9 +292,6 @@ public class AST implements Parser{
                 System.out.println("Dentro de FACTOR");
                 UNARY();
                 FACTOR_2();
-                break;
-        
-            default:
                 break;
         }
     }
@@ -325,10 +306,6 @@ public class AST implements Parser{
             match(TipoToken.STAR);
             UNARY();
             FACTOR_2();
-        }
-        else{
-            hayErrores=true;
-            System.out.println("Error: Se esperaba un * o /");
         }
     }
 
@@ -375,15 +352,11 @@ public class AST implements Parser{
     private void CALL_2(){
         if(hayErrores)
             return;
-        switch (preanalisis.tipo) {
-            case LEFT_PAREN:
+            if(preanalisis.tipo==TipoToken.LEFT_PAREN){
                 match(TipoToken.LEFT_PAREN);
                 ARGUMENTS_OPC();
                 match(TipoToken.RIGHT_PAREN);
                 CALL_2();
-                break;
-            default:
-                break;
         }
     }
 
