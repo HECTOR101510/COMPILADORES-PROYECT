@@ -12,25 +12,23 @@ public class AST implements Parser{
     private void DECLARATION(){
         if(hayErrores)
             return;
-        
         switch (preanalisis.tipo) {
-            case FUN:
+            case FUN ->{
+                System.out.println("Entro al case FUN");
                 FUN_DECL();
                 DECLARATION();
-                break;
-            case VAR:
+            }
+            case VAR ->{
+                System.out.println("Entro al case VAR");
                 VAR_DECL();
                 DECLARATION();
-                break;
+            }
 
-            case TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_BRACE:
+            case TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_BRACE ->{
+                System.out.println("Entro al case 3");
                 STATEMENT();
                 DECLARATION();
-                break;
-            default:
-                hayErrores=true;
-                System.out.println("Se encontro errores");
-                break;
+            }
         }
     }
 
@@ -46,7 +44,17 @@ public class AST implements Parser{
     }
 
     private void VAR_DECL(){
-
+        if(preanalisis.tipo==TipoToken.VAR){
+            match(TipoToken.VAR);
+            match(TipoToken.IDENTIFIER);
+            if(preanalisis.tipo==TipoToken.EQUAL){
+                VAR_INIT();
+            }
+            match(TipoToken.SEMICOLON);
+        }else{
+            hayErrores=true;
+            System.out.println("Error: Se esperaba un VAR");
+        }
     }
 
     private void STATEMENT(){
@@ -95,17 +103,6 @@ public class AST implements Parser{
         }
     }
 
-    private void match(TipoToken tt){
-        if(preanalisis.tipo==tt){
-            i++;
-            preanalisis=tokens.get(i);
-        }
-        else{
-            hayErrores=true;
-            System.out.println("Error localizado");
-        }
-    }
-
     private void BLOCK(){
         if(hayErrores)
             return;
@@ -115,6 +112,43 @@ public class AST implements Parser{
             match(TipoToken.RIGHT_BRACE);
         }else{
             System.out.println("Error: Se esperaba un { } o la declaracion");
+        }
+    }
+
+    private void VAR_INIT(){
+        if(hayErrores)
+            return;
+        if(preanalisis.tipo==TipoToken.EQUAL){
+              match(TipoToken.EQUAL);
+              EXPRESSION();
+        }else{
+            System.out.println("Error: Se esoeraba un =");
+        }
+    }
+
+    private void EXPRESSION(){
+        if(hayErrores)
+            return;
+        ASSIGNMENT();
+    }
+
+    private void ASSIGNMENT(){
+        if(hayErrores)
+            return;
+    }
+
+
+    private void match(TipoToken tt) {
+        if (i < tokens.size()) {
+            if (preanalisis.tipo == tt) {
+                i++;
+                if (i < tokens.size()) {
+                    preanalisis = tokens.get(i);
+                }
+            } else {
+                hayErrores = true;
+                System.out.println("Error localizado: Se esperaba " + tt + " pero se encontró " + preanalisis.tipo + " en el índice " + i);
+            }
         }
     }
 

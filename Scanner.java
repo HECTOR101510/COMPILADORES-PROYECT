@@ -359,7 +359,7 @@ public class Scanner {
                     break;
             }
         }
-        tokens.add(new Token(TipoToken.EOF, "EOF"));
+       // tokens.add(new Token(TipoToken.EOF, "EOF"));
         return tokens;
     }
 }
