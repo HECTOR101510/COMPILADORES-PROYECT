@@ -28,11 +28,15 @@ public class AST implements Parser{
                 STATEMENT();
                 DECLARATION();
             break;
+            default:
+                //caso de DECLARATION ->Ɛ 
+            break;
         }
     }
 
     private void FUN_DECL(){
         if(preanalisis.tipo==TipoToken.FUN){
+            System.out.println("Sigo en fun");
             match(TipoToken.FUN);
             FUNCTION();
         }
@@ -61,15 +65,115 @@ public class AST implements Parser{
     }
 
     private void STATEMENT(){
+        EXPR_STMT();
+        FOR_STMT();
+        IF_STMT();
+        PRINT_STMT();
+        RETURN_STMT();
+        WHILE_STMT();
+        BLOCK();
+    }
 
+    private void EXPR_STMT(){
+        EXPRESSION();
+    }
+
+    private void FOR_STMT(){
+        if(preanalisis.tipo==TipoToken.FOR){
+            System.out.println("Entramos a FOR_STMT");
+            match(TipoToken.FOR);
+            match(TipoToken.LEFT_PAREN);
+            FOR_STMT_1();
+            FOR_STMT_2();
+            FOR_STMT_3();
+            match(TipoToken.RIGHT_PAREN);
+            STATEMENT();    
+        }else{
+            hayErrores=true;
+            System.out.println("Error: Se esperaba un for");
+        }
+    }
+
+    private void FOR_STMT_1(){
+        VAR_DECL();
+        EXPR_STMT();
+        match(TipoToken.SEMICOLON);
+    }
+
+    private void FOR_STMT_2(){
+        EXPRESSION();
+        match(TipoToken.SEMICOLON);
+    }
+
+    private void FOR_STMT_3(){
+        EXPRESSION();
+    }
+
+    private void IF_STMT(){
+        if(preanalisis.tipo==TipoToken.IF){
+            match(TipoToken.IF);
+            match(TipoToken.LEFT_PAREN);
+            EXPRESSION();
+            match(TipoToken.RIGHT_PAREN);
+            STATEMENT();
+            ELSE_STATEMENT();
+        }
+    }
+
+    private void ELSE_STATEMENT(){
+        if(preanalisis.tipo==TipoToken.ELSE){
+            match(TipoToken.ELSE);
+            STATEMENT();
+        }
+    }
+
+    private void PRINT_STMT(){
+        if(preanalisis.tipo==TipoToken.PRINT){
+            match(TipoToken.PRINT);
+            EXPRESSION();
+            match(TipoToken.SEMICOLON);
+        }
+        else{
+            hayErrores=true;
+            System.out.println("Error: Se esperaba un print");
+        }
+    }
+
+    private void RETURN_STMT(){
+        if(preanalisis.tipo==TipoToken.RETURN){
+            match(TipoToken.RETURN);
+            RETURN_EXP_OPC();
+            match(TipoToken.SEMICOLON);
+        }else{
+            hayErrores=true;
+            System.out.println("Error: Se esperaba un return");
+        }
+    }
+
+    private void RETURN_EXP_OPC(){
+        EXPRESSION();
+    }
+
+    private void WHILE_STMT(){
+        if(preanalisis.tipo==TipoToken.WHILE){
+           match(TipoToken.WHILE); 
+           match(TipoToken.LEFT_PAREN); 
+           EXPRESSION();
+           match(TipoToken.RIGHT_PAREN); 
+           STATEMENT();
+        }else{
+            hayErrores=true;
+            System.out.println("Error: Se esperaba un while");
+        }
     }
 
     private void FUNCTION(){
         if(preanalisis.tipo==TipoToken.IDENTIFIER){
+            System.out.println("Estoy en funtion: id y pre:"+preanalisis.tipo+" name: "+preanalisis.lexema);
             match(TipoToken.IDENTIFIER);
-            match(TipoToken.LEFT_BRACE);
+            match(TipoToken.LEFT_PAREN);
             PARAMETERS_OPC();
-            match(TipoToken.RIGHT_BRACE);
+            match(TipoToken.RIGHT_PAREN);
             BLOCK();
         }
     }
@@ -77,6 +181,7 @@ public class AST implements Parser{
     private void PARAMETERS_OPC(){
         if(hayErrores)
         return;
+        System.out.println("Estoy en PARAMETERS_OPC");
         PARAMETERS();
     }
 
@@ -84,6 +189,7 @@ public class AST implements Parser{
         if(hayErrores)
         return;
         if(preanalisis.tipo==TipoToken.IDENTIFIER){
+            System.out.println("Estoy en PARAMETERS: id");
             match(TipoToken.IDENTIFIER);
             PARAMETERS_2();
         }
@@ -91,12 +197,10 @@ public class AST implements Parser{
 
     private void PARAMETERS_2(){
         if(preanalisis.tipo==TipoToken.COMMA){
+            System.out.println("Estoy en PARAMETERS_2: coma");
             match(TipoToken.COMMA);
             match(TipoToken.IDENTIFIER);
             PARAMETERS_2();
-        }else{
-            hayErrores=true;
-            System.out.println("Error: se esperaba una , o ID");
         }
     }
 
@@ -357,7 +461,7 @@ public class AST implements Parser{
                 ARGUMENTS_OPC();
                 match(TipoToken.RIGHT_PAREN);
                 CALL_2();
-        }
+            }
     }
 
     private void ARGUMENTS_OPC(){
@@ -372,7 +476,14 @@ public class AST implements Parser{
             ARGUMENTS();
         }
     }
-
+    private void FUNCTIONS(){
+        if(hayErrores)
+            return;
+        if(preanalisis.tipo == TipoToken.FUN){
+            FUN_DECL();
+            FUNCTIONS();
+        }
+    }
     private void PRIMARY(){
         System.out.println("Dentro de PRIMARY");
         if(hayErrores)
