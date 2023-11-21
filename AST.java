@@ -76,6 +76,7 @@ public class AST implements Parser{
 
     private void EXPR_STMT(){
         EXPRESSION();
+        match(TipoToken.SEMICOLON);
     }
 
     private void FOR_STMT(){
@@ -101,8 +102,12 @@ public class AST implements Parser{
     }
 
     private void FOR_STMT_2(){
-        EXPRESSION();
-        match(TipoToken.SEMICOLON);
+        if(preanalisis.tipo==TipoToken.SEMICOLON){
+            match(TipoToken.SEMICOLON);
+        }else{
+            EXPRESSION();
+            match(TipoToken.SEMICOLON);
+        }
     }
 
     private void FOR_STMT_3(){
