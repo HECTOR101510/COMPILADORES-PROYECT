@@ -181,6 +181,10 @@ public class AST implements Parser{
             match(TipoToken.RIGHT_PAREN);
             BLOCK();
         }
+         else{
+            System.out.println("Se esperaba un IDENTIFICADOR");
+            hayErrores=true;
+        }
     }
 
     private void PARAMETERS_OPC(){
@@ -197,6 +201,10 @@ public class AST implements Parser{
             System.out.println("Estoy en PARAMETERS: id");
             match(TipoToken.IDENTIFIER);
             PARAMETERS_2();
+        }
+         else{
+            System.out.println("Se esperaba un IDENTIFICADOR");
+            hayErrores=true;
         }
     }
 
@@ -238,6 +246,8 @@ public class AST implements Parser{
         System.out.println("Dentro de EXPRESSION");
         ASSIGNMENT();
         System.out.println("Fuera de EXPRESSION");
+       
+
     }
 
     private void ASSIGNMENT(){
