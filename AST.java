@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.List;
 
 public class AST implements Parser{
@@ -241,41 +242,22 @@ public class AST implements Parser{
     }
 
     private Expression EXPRESSION(){
-        
         System.out.println("Dentro de EXPRESSION");
-        ASSIGNMENT();
-        System.out.println("Fuera de EXPRESSION");
-       
-
+        return ASSIGNMENT();
     }
 
-    private void ASSIGNMENT(){
-        System.out.println("Dentro de ASSIGNMENT PRENALISIS: "+preanalisis.tipo);
-        if(hayErrores)
-            return;
-        switch (preanalisis.tipo) {
-            case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN ->{
+    private Expression ASSIGNMENT(){
                 System.out.println("Dentro de ASSIGNMENT");
-                LOGIC_OR();
-                ASSIGNMENT_OPC();
-               }
-        
-        }
+                Expression expr=LOGIC_OR();
+                expr=ASSIGNMENT_OPC(expr);
+                return expr;
     }
 
-    private void LOGIC_OR(){
-        if(hayErrores)
-            return;
-        switch (preanalisis.tipo) {
-            case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+    private Expression LOGIC_OR(){
                 System.out.println("Dentro de LOGIC_OR");
                 LOGIC_AND();
                 LOGIC_OR_2();
-                break;
-        
-            default:
-                break;
-        }
+                return 
     }
 
     private void LOGIC_OR_2(){
@@ -288,19 +270,11 @@ public class AST implements Parser{
         }
     }
 
-    private void LOGIC_AND(){
-        if(hayErrores)
-            return;
-        switch (preanalisis.tipo) {
-            case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+    private Expression LOGIC_AND(){
                 System.out.println("Dentro de LOGIC_AND");
-                EQUALITY();
+                Expression expr= EQUALITY();
                 LOGIC_AND_2();
-                break;
-        
-            default:
-                break;
-        }
+                return;
     }
 
     private void LOGIC_AND_2(){
@@ -313,19 +287,10 @@ public class AST implements Parser{
         }
     }
 
-    private void EQUALITY(){
-        if(hayErrores)
-            return;
-        switch (preanalisis.tipo) {
-            case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+    private Expression EQUALITY(){
                 System.out.println("Dentro de EQUALITY");
-                COMPARISON();
+                Expression expr= COMPARISON();
                 EQUALITY_2();
-                break;
-        
-            default:
-                break;
-        }
     }
     private void EQUALITY_2(){
         if(preanalisis.tipo==TipoToken.BANG_EQUAL){
@@ -339,16 +304,10 @@ public class AST implements Parser{
             EQUALITY_2();
         }
     }
-    private void COMPARISON(){
-        if(hayErrores)
-            return;
-        switch (preanalisis.tipo) {
-            case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
+    private Expression COMPARISON(){
                 System.out.println("Dentro de COMPARISON");
-                TERM();
+                Expression expr=TERM();
                 COMPARISON_2();
-                break;
-        }
     }
         private void COMPARISON_2(){
             if(preanalisis.tipo==TipoToken.GREATER){
@@ -373,18 +332,8 @@ public class AST implements Parser{
             }
         }
         private void TERM(){
-        if(hayErrores)
-            return;
-        switch (preanalisis.tipo) {
-            case BANG,MINUS,TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_PAREN:
-                System.out.println("Dentro de TERM");
                 FACTOR();
                 TERM_2();
-                break;
-        
-            default:
-                break;
-        }
     }
 
     private void TERM_2(){
@@ -462,16 +411,22 @@ public class AST implements Parser{
     }
 
     private List<Expression> ARGUMENTS_OPC(){
-        EXPRESSION();
-        return ARGUMENTS();
+    List<Expression> arguments = new ArrayList<>();
+        Expression expr=EXPRESSION();
+        arguments.add(expr);
+        arguments=ARGUMENTS(arguments);
+        return arguments;
     }
 
-    private void ARGUMENTS(){
-        if(preanalisis.tipo==TipoToken.COMMA){
+    private List <Expression> ARGUMENTS(List<Expression> arguments){
+        if (preanalisis.tipo == TipoToken.COMMA) {
             match(TipoToken.COMMA);
-            EXPRESSION();
-            ARGUMENTS();
+            Token expre = previous();
+            Expression exp = EXPRESSION();
+            arguments.add(new ExprBinary(arguments.get(i-1), expre, exp));
+            arguments = ARGUMENTS(arguments);
         }
+        return arguments;
     }
     private void FUNCTIONS(){
         if(hayErrores)
@@ -514,13 +469,15 @@ public class AST implements Parser{
         return null;
     }
 
-    private void ASSIGNMENT_OPC(){
-        if(hayErrores)
-            return;
+    private Expression ASSIGNMENT_OPC(Expression exp){
         if(preanalisis.tipo==TipoToken.EQUAL){
             match(TipoToken.EQUAL);
-            EXPRESSION();
+            Token t =previous();
+            Expression tt=EXPRESSION();
+            ExprUnary expr=new ExprUnary(t,tt);
+            return exp;
         }
+        return exp;
     }
 
     private void match(TipoToken tt) {
