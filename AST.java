@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class AST implements Parser{
@@ -66,6 +67,30 @@ public class AST implements Parser{
     }
 
     private void STATEMENT(){
+        switch (preanalisis.tipo) {
+            case IF:
+                return IF_STMT();
+                break;
+            case FOR:
+                return FOR_STMT();
+                break;
+            case PRINT:
+                return PRINT_STMT();
+                break;
+            case RETURN:
+                return RETURN_STMT();
+                break;
+            case WHILE:
+                return WHILE_STMT();
+                break;
+            case LEFT_BRACE:
+                return BLOCK();
+                break;
+            default:
+                break;
+        }
+
+
         EXPR_STMT();
         FOR_STMT();
         IF_STMT();
@@ -177,6 +202,7 @@ public class AST implements Parser{
         if(preanalisis.tipo==TipoToken.IDENTIFIER){
             System.out.println("Estoy en funtion: id y pre:"+preanalisis.tipo+" name: "+preanalisis.lexema);
             match(TipoToken.IDENTIFIER);
+            Token t=previous();
             match(TipoToken.LEFT_PAREN);
             PARAMETERS_OPC();
             match(TipoToken.RIGHT_PAREN);
@@ -243,7 +269,8 @@ public class AST implements Parser{
 
     private Expression EXPRESSION(){
         System.out.println("Dentro de EXPRESSION");
-        return ASSIGNMENT();
+        Expression expr= ASSIGNMENT();
+        return expr;
     }
 
     private Expression ASSIGNMENT(){
@@ -255,100 +282,88 @@ public class AST implements Parser{
 
     private Expression LOGIC_OR(){
                 System.out.println("Dentro de LOGIC_OR");
-                LOGIC_AND();
-                LOGIC_OR_2();
-                return 
+                Expression expr= LOGIC_AND();
+                expr= LOGIC_OR_2(expr);
+                return expr;
     }
 
-    private void LOGIC_OR_2(){
-        if(hayErrores)
-            return;
+    private Expression LOGIC_OR_2(Expression expr){
         if(preanalisis.tipo==TipoToken.OR){
             match(TipoToken.OR);
-            LOGIC_AND();
-            LOGIC_OR_2();
+            Expression right =LOGIC_AND();
+            Token exprr=previous();
+            expr=new ExprBinary(expr, exprr, right);
+            expr=LOGIC_OR_2(expr);
+            return expr;
         }
+        return expr;
     }
 
     private Expression LOGIC_AND(){
                 System.out.println("Dentro de LOGIC_AND");
                 Expression expr= EQUALITY();
-                LOGIC_AND_2();
-                return;
+                expr =LOGIC_AND_2(expr);
+                return expr;
     }
 
-    private void LOGIC_AND_2(){
-        if(hayErrores)
-            return;
+    private Expression LOGIC_AND_2(Expression expr){
         if(preanalisis.tipo==TipoToken.AND){
             match(TipoToken.AND);
-            EQUALITY();
-            LOGIC_AND_2();
+            Expression right= EQUALITY();
+            expr=new ExprBinary(expr, new Token(TipoToken.AND, "and"), right);
+            expr=LOGIC_AND_2(expr);
+            return expr;
         }
+        return expr;
     }
 
     private Expression EQUALITY(){
                 System.out.println("Dentro de EQUALITY");
                 Expression expr= COMPARISON();
-                EQUALITY_2();
+                expr =EQUALITY_2(expr);
+                return expr;
     }
-    private void EQUALITY_2(){
-        if(preanalisis.tipo==TipoToken.BANG_EQUAL){
-            match(TipoToken.BANG_EQUAL);
-            COMPARISON();
-            EQUALITY_2();
+    private Expression EQUALITY_2(Expression expr){
+        while(preanalisis.tipo==TipoToken.BANG_EQUAL||preanalisis.tipo==TipoToken.EQUAL_EQUAL){
+            Token operador=preanalisis;
+            match(preanalisis.tipo);
+            Expression right = COMPARISON();
+            expr= new ExprBinary(expr, operador, right);
         }
-        else if(preanalisis.tipo==TipoToken.EQUAL_EQUAL){
-            match(TipoToken.EQUAL_EQUAL);
-            COMPARISON();
-            EQUALITY_2();
-        }
+        return expr;
     }
     private Expression COMPARISON(){
                 System.out.println("Dentro de COMPARISON");
                 Expression expr=TERM();
-                COMPARISON_2();
+                expr= COMPARISON_2(expr);
+                return expr;
     }
-        private void COMPARISON_2(){
-            if(preanalisis.tipo==TipoToken.GREATER){
-                match(TipoToken.GREATER);
-                TERM();
-                COMPARISON_2();
+        private Expression COMPARISON_2(Expression expr){
+            while(preanalisis.tipo==TipoToken.GREATER||
+            preanalisis.tipo==TipoToken.GREATER_EQUAL||
+            preanalisis.tipo==TipoToken.LESS||
+            preanalisis.tipo==TipoToken.LESS_EQUAL){
+                Token operador= preanalisis;
+                match(preanalisis.tipo);
+                Expression right=TERM();
+                expr= new ExprBinary(expr, operador, right);
             }
-            else if(preanalisis.tipo==TipoToken.GREATER_EQUAL){
-                match(TipoToken.GREATER_EQUAL);
-                TERM();
-                COMPARISON_2();
-            }
-            else if(preanalisis.tipo==TipoToken.LESS){
-                match(TipoToken.LESS);
-                TERM();
-                COMPARISON_2();
-            }
-            else if(preanalisis.tipo==TipoToken.LESS_EQUAL){
-                match(TipoToken.LESS_EQUAL);
-                TERM();
-                COMPARISON_2();
-            }
+            return expr;
         }
-        private void TERM(){
-                FACTOR();
-                TERM_2();
+        private Expression TERM(){
+                Expression expr=FACTOR();
+                expr=TERM_2(expr);
+                return expr;
     }
 
-    private void TERM_2(){
-        if(hayErrores)
-            return;
-        if(preanalisis.tipo==TipoToken.MINUS){
-            match(TipoToken.MINUS);
-            FACTOR();
-            TERM_2();
+    private Expression TERM_2(Expression expr){
+        while(preanalisis.tipo==TipoToken.MINUS||preanalisis.tipo==TipoToken.PLUS){
+            Token operador=preanalisis;
+            match(preanalisis.tipo);
+            Expression right=FACTOR();
+            expr=new ExprBinary(expr, operador, right);
         }
-        else if(preanalisis.tipo==TipoToken.PLUS){
-            match(TipoToken.PLUS);
-            FACTOR();
-            TERM_2();
-        }
+        return expr;
     }
 
     private Expression FACTOR(){
@@ -397,7 +412,7 @@ public class AST implements Parser{
         expr = CALL_2(expr);
         return expr;
     }
-
+//revisa esta parte
     private Expression CALL_2(Expression expr){
         switch (preanalisis.tipo){
             case LEFT_PAREN:
@@ -411,22 +426,23 @@ public class AST implements Parser{
     }
 
     private List<Expression> ARGUMENTS_OPC(){
-    List<Expression> arguments = new ArrayList<>();
-        Expression expr=EXPRESSION();
-        arguments.add(expr);
-        arguments=ARGUMENTS(arguments);
-        return arguments;
+        if(preanalisis.tipo!=TipoToken.RIGHT_PAREN){
+            return ARGUMENTS();
+        }
+        return Collections.emptyList();//caso-> E
     }
 
-    private List <Expression> ARGUMENTS(List<Expression> arguments){
-        if (preanalisis.tipo == TipoToken.COMMA) {
-            match(TipoToken.COMMA);
-            Token expre = previous();
-            Expression exp = EXPRESSION();
-            arguments.add(new ExprBinary(arguments.get(i-1), expre, exp));
-            arguments = ARGUMENTS(arguments);
+    private List <Expression> ARGUMENTS(){
+        List<Expression> argumento=new ArrayList<>();
+        if(preanalisis.tipo!=TipoToken.RIGHT_PAREN){
+            do{
+            argumento.add(EXPRESSION());
+                if(preanalisis.tipo==TipoToken.COMMA){
+                    match(TipoToken.COMMA);
+                }
+            }while(preanalisis.tipo!=TipoToken.RIGHT_PAREN);
         }
-        return arguments;
+        return argumento;
     }
     private void FUNCTIONS(){
         if(hayErrores)
@@ -475,7 +491,7 @@ public class AST implements Parser{
             Token t =previous();
             Expression tt=EXPRESSION();
             ExprUnary expr=new ExprUnary(t,tt);
-            return exp;
+            return expr;
         }
         return exp;
     }
