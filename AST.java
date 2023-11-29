@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -11,260 +12,231 @@ public class AST implements Parser{
         this.tokens=tokens;
         preanalisis=this.tokens.get(i);
     }
-    private void DECLARATION(){
-        if(hayErrores)
-            return;
+    private Statement DECLARATION(){
+        Statement resultado=null;
         switch (preanalisis.tipo){
             case FUN:
                 System.out.println("Entro al case FUN");
-                FUN_DECL();
+                resultado=FUN_DECL();
                 DECLARATION();
             break;
             case VAR:
                 System.out.println("Entro al case VAR");
-                VAR_DECL();
+                resultado=VAR_DECL();
                 DECLARATION();
             break;
             case TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_BRACE:
                 System.out.println("Entro al case 3");
-                STATEMENT();
+                resultado=STATEMENT();
                 DECLARATION();
             break;
             default:
                 //caso de DECLARATION ->Ɛ 
             break;
         }
+        return resultado;
     }
 
-    private void FUN_DECL(){
-        if(preanalisis.tipo==TipoToken.FUN){
+    private Statement FUN_DECL(){
             System.out.println("Sigo en fun");
             match(TipoToken.FUN);
-            FUNCTION();
-        }
-        else{
-            System.out.println("Se esperaba un fun");
-            hayErrores=true;
-        }
+            return FUNCTION();
     }
 
-    private void VAR_DECL(){
-        System.out.println("Entramos a VAR_INIT PRENASLISIS: "+preanalisis.tipo);
-        if(preanalisis.tipo==TipoToken.VAR){
+    private Statement VAR_DECL(){
             match(TipoToken.VAR);
-            System.out.println("Prenalisis"+preanalisis.tipo);
             match(TipoToken.IDENTIFIER);
-            System.out.println("Prenalisis"+preanalisis.tipo);
-            if(preanalisis.tipo==TipoToken.EQUAL){
-                VAR_INIT();
-                System.out.println("Entramos a VAR_INIT con =");
-            }
+            Token t=previous();
+            Expression x=VAR_INIT();
             match(TipoToken.SEMICOLON);
-        }else{
-            hayErrores=true;
-            System.out.println("Error: Se esperaba un VAR");
-        }
+            return new StmtVar(t, x);
     }
 
-    private void STATEMENT(){
-        switch (preanalisis.tipo) {
+    private Statement STATEMENT(){
+        switch (preanalisis.tipo){
             case IF:
                 return IF_STMT();
-                break;
             case FOR:
                 return FOR_STMT();
-                break;
             case PRINT:
                 return PRINT_STMT();
-                break;
             case RETURN:
                 return RETURN_STMT();
-                break;
             case WHILE:
                 return WHILE_STMT();
-                break;
             case LEFT_BRACE:
                 return BLOCK();
-                break;
             default:
-                break;
+                System.out.println("Error: validacion erronea");
+                hayErrores=true;
+                return null;
         }
-
-
-        EXPR_STMT();
-        FOR_STMT();
-        IF_STMT();
-        PRINT_STMT();
-        RETURN_STMT();
-        WHILE_STMT();
-        BLOCK();
     }
 
-    private void EXPR_STMT(){
-        EXPRESSION();
+    private Statement EXPR_STMT(){
+        Expression expr=EXPRESSION();
         match(TipoToken.SEMICOLON);
+        return new StmtExpression(expr);
     }
 
-    private void FOR_STMT(){
-        if(preanalisis.tipo==TipoToken.FOR){
+    private Statement FOR_STMT(){
             System.out.println("Entramos a FOR_STMT");
             match(TipoToken.FOR);
             match(TipoToken.LEFT_PAREN);
-            FOR_STMT_1();
-            FOR_STMT_2();
-            FOR_STMT_3();
+            Statement x= FOR_STMT_1();
+            Expression y=FOR_STMT_2();
+            Expression z=FOR_STMT_3();
             match(TipoToken.RIGHT_PAREN);
-            STATEMENT();    
+            Statement body= STATEMENT();
+            if(x!=null){
+                if(z!=null){
+                    body=new StmtBlock(Arrays.asList(body,new StmtExpression(z)));
+                }
+                return new StmtBlock(Arrays.asList(x, new StmtLoop(y,body)));
+            }else{
+                if(z!=null){
+                    body = new StmtBlock(Arrays.asList(body, new StmtExpression(z)));
+                }
+                return new StmtLoop(y, body);
+            }
+            
+    }
+
+    private Statement FOR_STMT_1(){
+        if(preanalisis.tipo==TipoToken.VAR){
+            return VAR_DECL();
+        }else if(preanalisis.tipo!=TipoToken.SEMICOLON){
+            return EXPR_STMT();
         }else{
-            hayErrores=true;
-            System.out.println("Error: Se esperaba un for");
+            match(TipoToken.SEMICOLON);
+            return null;
         }
     }
 
-    private void FOR_STMT_1(){
-        VAR_DECL();
-        EXPR_STMT();
-        match(TipoToken.SEMICOLON);
-    }
-
-    private void FOR_STMT_2(){
-        if(preanalisis.tipo==TipoToken.SEMICOLON){
+    private Expression FOR_STMT_2(){
+        if(preanalisis.tipo!=TipoToken.SEMICOLON){
+            Expression expr=EXPRESSION();
             match(TipoToken.SEMICOLON);
+            return expr;
         }else{
-            EXPRESSION();
             match(TipoToken.SEMICOLON);
+            return null;
         }
     }
 
-    private void FOR_STMT_3(){
-        EXPRESSION();
+    private Expression FOR_STMT_3(){
+        if(preanalisis.tipo!=TipoToken.RIGHT_PAREN){
+            return EXPRESSION();
+        }else{
+            return null;
+        }
     }
 
-    private void IF_STMT(){
-        if(preanalisis.tipo==TipoToken.IF){
+    private Statement IF_STMT(){
             match(TipoToken.IF);
             match(TipoToken.LEFT_PAREN);
-            EXPRESSION();
+            Expression x=EXPRESSION();
             match(TipoToken.RIGHT_PAREN);
-            STATEMENT();
-            ELSE_STATEMENT();
-        }
+            Statement b=STATEMENT();
+            Statement a=ELSE_STATEMENT();
+            return new StmtIf(x, b, a);
     }
 
-    private void ELSE_STATEMENT(){
+    private Statement ELSE_STATEMENT(){
         if(preanalisis.tipo==TipoToken.ELSE){
             match(TipoToken.ELSE);
-            STATEMENT();
+            return STATEMENT();
         }
+        return null;
     }
 
-    private void PRINT_STMT(){
-        if(preanalisis.tipo==TipoToken.PRINT){
+    private Statement PRINT_STMT(){
             match(TipoToken.PRINT);
-            EXPRESSION();
+            Expression value=EXPRESSION();
             match(TipoToken.SEMICOLON);
-        }
-        else{
-            hayErrores=true;
-            System.out.println("Error: Se esperaba un print");
-        }
+            return new StmtPrint(value);
     }
 
-    private void RETURN_STMT(){
-        if(preanalisis.tipo==TipoToken.RETURN){
+    private Statement RETURN_STMT(){
             match(TipoToken.RETURN);
-            RETURN_EXP_OPC();
+            Expression value=RETURN_EXP_OPC();
             match(TipoToken.SEMICOLON);
-        }else{
-            hayErrores=true;
-            System.out.println("Error: Se esperaba un return");
+            return new StmtReturn(value);
+    }
+
+    private Expression RETURN_EXP_OPC(){
+        if(preanalisis.tipo!=TipoToken.SEMICOLON){
+            return EXPRESSION();
         }
+        return null;
     }
 
-    private void RETURN_EXP_OPC(){
-        EXPRESSION();
-    }
-
-    private void WHILE_STMT(){
-        if(preanalisis.tipo==TipoToken.WHILE){
+    private Statement WHILE_STMT(){
            match(TipoToken.WHILE); 
            match(TipoToken.LEFT_PAREN); 
-           EXPRESSION();
+           Expression condition=EXPRESSION();
            match(TipoToken.RIGHT_PAREN); 
-           STATEMENT();
-        }else{
-            hayErrores=true;
-            System.out.println("Error: Se esperaba un while");
-        }
+           Statement body=STATEMENT();
+           return new StmtLoop(condition, body);
     }
 
-    private void FUNCTION(){
-        if(preanalisis.tipo==TipoToken.IDENTIFIER){
+    private Statement FUNCTION(){
             System.out.println("Estoy en funtion: id y pre:"+preanalisis.tipo+" name: "+preanalisis.lexema);
             match(TipoToken.IDENTIFIER);
             Token t=previous();
             match(TipoToken.LEFT_PAREN);
-            PARAMETERS_OPC();
+            List<Token>parametros= PARAMETERS_OPC();
             match(TipoToken.RIGHT_PAREN);
-            BLOCK();
-        }
-         else{
-            System.out.println("Se esperaba un IDENTIFICADOR");
-            hayErrores=true;
-        }
+            StmtBlock body= BLOCK();
+            return new StmtFunction(t, parametros, body);
     }
 
-    private void PARAMETERS_OPC(){
-        if(hayErrores)
-        return;
-        System.out.println("Estoy en PARAMETERS_OPC");
-        PARAMETERS();
+    private List<Token> PARAMETERS_OPC(){
+        if(preanalisis.tipo!=TipoToken.RIGHT_PAREN)
+        return PARAMETERS();
+        return Collections.emptyList();//caso vacio
     }
 
-    private void PARAMETERS(){
-        if(hayErrores)
-        return;
+    private List<Token> PARAMETERS(){
+        List<Token> parametros=new ArrayList<>();
         if(preanalisis.tipo==TipoToken.IDENTIFIER){
-            System.out.println("Estoy en PARAMETERS: id");
-            match(TipoToken.IDENTIFIER);
-            PARAMETERS_2();
+            do{
+                match(TipoToken.IDENTIFIER);
+                parametros.add(previous());
+                parametros=PARAMETERS_2(parametros);
+            }while(preanalisis.tipo==TipoToken.RIGHT_PAREN);
         }
-         else{
-            System.out.println("Se esperaba un IDENTIFICADOR");
-            hayErrores=true;
-        }
+        return parametros;
     }
 
-    private void PARAMETERS_2(){
+    private List<Token> PARAMETERS_2(List<Token> lista){
         if(preanalisis.tipo==TipoToken.COMMA){
             System.out.println("Estoy en PARAMETERS_2: coma");
             match(TipoToken.COMMA);
             match(TipoToken.IDENTIFIER);
-            PARAMETERS_2();
+            lista.add(previous());
         }
+        return lista;
     }
 
-    private void BLOCK(){
-        if(hayErrores)
-            return;
-        if(preanalisis.tipo==TipoToken.LEFT_BRACE){
-            match(TipoToken.LEFT_BRACE);
-            DECLARATION();
-            match(TipoToken.RIGHT_BRACE);
-        }else{
-            System.out.println("Error: Se esperaba un { } o la declaracion");
+    private StmtBlock BLOCK(){
+        match(TipoToken.LEFT_BRACE);
+        List<Statement> statements=new ArrayList<>();
+        while (preanalisis.tipo!=TipoToken.RIGHT_BRACE && 
+        preanalisis.tipo!=TipoToken.LEFT_BRACE){
+            statements.add(DECLARATION());
         }
+        match(TipoToken.RIGHT_BRACE);
+        return new StmtBlock(statements);
     }
 
-    private void VAR_INIT(){
-        System.out.println("dentro VAR_INIT Prenalisis: "+preanalisis.tipo);
-        if(hayErrores)
-            return;
+    private Expression VAR_INIT(){
         if(preanalisis.tipo==TipoToken.EQUAL){
               match(TipoToken.EQUAL);
               System.out.println("Dentro de VAR_INIT");
-              EXPRESSION();
+              return EXPRESSION();
         }
+        return null;
     }
 
     private Expression EXPRESSION(){
