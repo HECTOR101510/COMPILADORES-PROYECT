@@ -12,33 +12,35 @@ public class AST implements Parser{
         this.tokens=tokens;
         preanalisis=this.tokens.get(i);
     }
+    private boolean PROGRAM(){
+        DECLARATION();
+        if(preanalisis.tipo==TipoToken.EOF){
+            System.out.println("ASDR correcto");
+            return hayErrores;
+        }else{
+            System.out.println("Error en ASTs");
+            return hayErrores;
+        }
+    }
     private Statement DECLARATION(){
         Statement resultado=null;
-        switch (preanalisis.tipo){
-            case FUN:
-                System.out.println("Entro al case FUN");
+        while (true) {
+            if(preanalisis.tipo==TipoToken.FUN){
                 resultado=FUN_DECL();
-                DECLARATION();
-            break;
-            case VAR:
-                System.out.println("Entro al case VAR");
+            }else if(preanalisis.tipo==TipoToken.VAR){
                 resultado=VAR_DECL();
-                DECLARATION();
-            break;
-            case TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_BRACE:
-                System.out.println("Entro al case 3");
+            }else if(preanalisis.tipo==TipoToken.IF||preanalisis.tipo==TipoToken.FOR||
+            preanalisis.tipo==TipoToken.PRINT||preanalisis.tipo==TipoToken.RETURN||
+            preanalisis.tipo==TipoToken.WHILE||preanalisis.tipo==TipoToken.LEFT_BRACE){
                 resultado=STATEMENT();
-                DECLARATION();
-            break;
-            default:
-                //caso de DECLARATION ->Ɛ 
-            break;
+            }else{
+                break;
+            }
         }
         return resultado;
     }
 
     private Statement FUN_DECL(){
-            System.out.println("Sigo en fun");
             match(TipoToken.FUN);
             return FUNCTION();
     }
@@ -80,7 +82,6 @@ public class AST implements Parser{
     }
 
     private Statement FOR_STMT(){
-            System.out.println("Entramos a FOR_STMT");
             match(TipoToken.FOR);
             match(TipoToken.LEFT_PAREN);
             Statement x= FOR_STMT_1();
@@ -181,7 +182,6 @@ public class AST implements Parser{
     }
 
     private Statement FUNCTION(){
-            System.out.println("Estoy en funtion: id y pre:"+preanalisis.tipo+" name: "+preanalisis.lexema);
             match(TipoToken.IDENTIFIER);
             Token t=previous();
             match(TipoToken.LEFT_PAREN);
@@ -192,8 +192,9 @@ public class AST implements Parser{
     }
 
     private List<Token> PARAMETERS_OPC(){
-        if(preanalisis.tipo!=TipoToken.RIGHT_PAREN)
-        return PARAMETERS();
+        if(preanalisis.tipo!=TipoToken.RIGHT_PAREN){
+            return PARAMETERS();
+        }
         return Collections.emptyList();//caso vacio
     }
 
@@ -204,14 +205,13 @@ public class AST implements Parser{
                 match(TipoToken.IDENTIFIER);
                 parametros.add(previous());
                 parametros=PARAMETERS_2(parametros);
-            }while(preanalisis.tipo==TipoToken.RIGHT_PAREN);
+            }while(preanalisis.tipo==TipoToken.COMMA);
         }
         return parametros;
     }
 
     private List<Token> PARAMETERS_2(List<Token> lista){
         if(preanalisis.tipo==TipoToken.COMMA){
-            System.out.println("Estoy en PARAMETERS_2: coma");
             match(TipoToken.COMMA);
             match(TipoToken.IDENTIFIER);
             lista.add(previous());
@@ -223,7 +223,7 @@ public class AST implements Parser{
         match(TipoToken.LEFT_BRACE);
         List<Statement> statements=new ArrayList<>();
         while (preanalisis.tipo!=TipoToken.RIGHT_BRACE && 
-        preanalisis.tipo!=TipoToken.LEFT_BRACE){
+        preanalisis.tipo!=TipoToken.EOF){
             statements.add(DECLARATION());
         }
         match(TipoToken.RIGHT_BRACE);
@@ -233,27 +233,23 @@ public class AST implements Parser{
     private Expression VAR_INIT(){
         if(preanalisis.tipo==TipoToken.EQUAL){
               match(TipoToken.EQUAL);
-              System.out.println("Dentro de VAR_INIT");
               return EXPRESSION();
         }
         return null;
     }
 
     private Expression EXPRESSION(){
-        System.out.println("Dentro de EXPRESSION");
         Expression expr= ASSIGNMENT();
         return expr;
     }
 
     private Expression ASSIGNMENT(){
-                System.out.println("Dentro de ASSIGNMENT");
                 Expression expr=LOGIC_OR();
                 expr=ASSIGNMENT_OPC(expr);
                 return expr;
     }
 
     private Expression LOGIC_OR(){
-                System.out.println("Dentro de LOGIC_OR");
                 Expression expr= LOGIC_AND();
                 expr= LOGIC_OR_2(expr);
                 return expr;
@@ -272,7 +268,6 @@ public class AST implements Parser{
     }
 
     private Expression LOGIC_AND(){
-                System.out.println("Dentro de LOGIC_AND");
                 Expression expr= EQUALITY();
                 expr =LOGIC_AND_2(expr);
                 return expr;
@@ -290,7 +285,6 @@ public class AST implements Parser{
     }
 
     private Expression EQUALITY(){
-                System.out.println("Dentro de EQUALITY");
                 Expression expr= COMPARISON();
                 expr =EQUALITY_2(expr);
                 return expr;
@@ -305,7 +299,6 @@ public class AST implements Parser{
         return expr;
     }
     private Expression COMPARISON(){
-                System.out.println("Dentro de COMPARISON");
                 Expression expr=TERM();
                 expr= COMPARISON_2(expr);
                 return expr;
@@ -357,7 +350,7 @@ public class AST implements Parser{
                 operador = previous();
                 expr2 = UNARY();
                 expb = new ExprBinary(expr, operador, expr2);
-                return FACTOR_2(expr2);
+                //return FACTOR_2(expr2);
         }
         return expr;
     }
@@ -461,23 +454,22 @@ public class AST implements Parser{
         if(preanalisis.tipo==TipoToken.EQUAL){
             match(TipoToken.EQUAL);
             Token t =previous();
-            Expression tt=EXPRESSION();
-            ExprUnary expr=new ExprUnary(t,tt);
-            return expr;
+            Expression tt=ASSIGNMENT();
+            exp= new ExprAssign(t, tt);
         }
         return exp;
     }
 
-    private void match(TipoToken tt) {
-        if (i < tokens.size()) {
-            if (preanalisis.tipo == tt) {
-                i++;
-                if (i < tokens.size()) {
-                    preanalisis = tokens.get(i);
-                }
-            } else {
-                hayErrores = true;
-            }
+    private void match(TipoToken tt){
+        if(preanalisis.tipo ==  tt){
+            i++;
+            preanalisis = tokens.get(i);
+        }
+        else{
+            String message = "Error:" +  // .getLine()
+                    ". Se esperaba " + preanalisis.getTipo() +
+                    " pero se encontró " + tt;
+            hayErrores=true;
         }
     }
 
@@ -487,7 +479,7 @@ public class AST implements Parser{
 
     @Override
     public boolean parse(){
-        DECLARATION();
+        PROGRAM();
         return !hayErrores;
     }
 }

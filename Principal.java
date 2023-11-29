@@ -49,18 +49,17 @@ public class Principal {
     }
     public static void ejecutar(String source){
        Scanner scanner= new Scanner(source);
-        List<Token> tokens= scanner.scanTokens();
+       List<Token> tokens= scanner.scanTokens();
+       /* 
+       
         
         for(Token token : tokens){
             System.out.println(token);
         }
-        
+         */
         Parser parser = new AST(tokens);
-        boolean exito = parser.parse(); // Llama al método parse y almacena el resultado
+        parser.parse();
      
-        if(exito){
-            System.out.println("Análisis exitoso. No se encontraron errores.");
-        }
          
     }
 }

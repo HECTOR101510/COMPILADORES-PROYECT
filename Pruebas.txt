@@ -1,4 +1,1 @@
-fun multiply(a, b) {
-    return a * b;
-}
-var result = multiply(5, 3);
+var x=4;
