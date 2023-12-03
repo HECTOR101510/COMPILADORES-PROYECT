@@ -81,27 +81,26 @@ public class AST implements Parser{
         return new StmtExpression(expr);
     }
 
-    private Statement FOR_STMT(){
-            match(TipoToken.FOR);
-            match(TipoToken.LEFT_PAREN);
-            Statement x= FOR_STMT_1();
-            Expression y=FOR_STMT_2();
-            Expression z=FOR_STMT_3();
-            match(TipoToken.RIGHT_PAREN);
-            Statement body= STATEMENT();
-            if(x!=null){
-                if(z!=null){
-                    body=new StmtBlock(Arrays.asList(body,new StmtExpression(z)));
+        private Statement FOR_STMT(){
+                match(TipoToken.FOR);
+                match(TipoToken.LEFT_PAREN);
+                Statement x= FOR_STMT_1();
+                Expression y=FOR_STMT_2();
+                Expression z=FOR_STMT_3();
+                match(TipoToken.RIGHT_PAREN);
+                Statement body= STATEMENT();
+                if(x!=null){
+                    if(z!=null){
+                        body=new StmtBlock(Arrays.asList(body,new StmtExpression(z)));
+                    }
+                    return new StmtBlock(Arrays.asList(x, new StmtLoop(y,body)));
+                }else{
+                    if(z!=null){
+                        body = new StmtBlock(Arrays.asList(body, new StmtExpression(z)));
+                    }
+                    return new StmtLoop(y, body);
                 }
-                return new StmtBlock(Arrays.asList(x, new StmtLoop(y,body)));
-            }else{
-                if(z!=null){
-                    body = new StmtBlock(Arrays.asList(body, new StmtExpression(z)));
-                }
-                return new StmtLoop(y, body);
-            }
-            
-    }
+        }
 
     private Statement FOR_STMT_1(){
         if(preanalisis.tipo==TipoToken.VAR){
@@ -200,13 +199,15 @@ public class AST implements Parser{
 
     private List<Token> PARAMETERS(){
         List<Token> parametros=new ArrayList<>();
-        if(preanalisis.tipo==TipoToken.IDENTIFIER){
-            do{
-                match(TipoToken.IDENTIFIER);
-                parametros.add(previous());
-                parametros=PARAMETERS_2(parametros);
-            }while(preanalisis.tipo==TipoToken.COMMA);
+        while (preanalisis.tipo == TipoToken.IDENTIFIER){
+        match(TipoToken.IDENTIFIER);
+        parametros.add(previous());
+        if (preanalisis.tipo == TipoToken.COMMA) {
+            parametros=PARAMETERS_2(parametros);
+        } else {
+            break; 
         }
+    }
         return parametros;
     }
 
@@ -244,9 +245,9 @@ public class AST implements Parser{
     }
 
     private Expression ASSIGNMENT(){
-                Expression expr=LOGIC_OR();
-                expr=ASSIGNMENT_OPC(expr);
-                return expr;
+            Expression expr=LOGIC_OR();
+            expr=ASSIGNMENT_OPC(expr);
+            return expr;
     }
 
     private Expression LOGIC_OR(){
@@ -299,11 +300,11 @@ public class AST implements Parser{
         return expr;
     }
     private Expression COMPARISON(){
-                Expression expr=TERM();
-                expr= COMPARISON_2(expr);
-                return expr;
+            Expression expr=TERM();
+            expr= COMPARISON_2(expr);
+            return expr;
     }
-        private Expression COMPARISON_2(Expression expr){
+    private Expression COMPARISON_2(Expression expr){
             while(preanalisis.tipo==TipoToken.GREATER||
             preanalisis.tipo==TipoToken.GREATER_EQUAL||
             preanalisis.tipo==TipoToken.LESS||
@@ -316,10 +317,10 @@ public class AST implements Parser{
             return expr;
         }
         private Expression TERM(){
-                Expression expr=FACTOR();
-                expr=TERM_2(expr);
-                return expr;
-    }
+            Expression expr=FACTOR();
+            expr=TERM_2(expr);
+            return expr;
+        }
 
     private Expression TERM_2(Expression expr){
         while(preanalisis.tipo==TipoToken.MINUS||preanalisis.tipo==TipoToken.PLUS){
@@ -350,7 +351,7 @@ public class AST implements Parser{
                 operador = previous();
                 expr2 = UNARY();
                 expb = new ExprBinary(expr, operador, expr2);
-                //return FACTOR_2(expr2);
+                return FACTOR_2(expr2);
         }
         return expr;
     }
@@ -397,21 +398,17 @@ public class AST implements Parser{
         return Collections.emptyList();//caso-> E
     }
 
-    private List <Expression> ARGUMENTS(){
-        List<Expression> argumento=new ArrayList<>();
-        if(preanalisis.tipo!=TipoToken.RIGHT_PAREN){
-            do{
-            argumento.add(EXPRESSION());
-                if(preanalisis.tipo==TipoToken.COMMA){
-                    match(TipoToken.COMMA);
-                }
-            }while(preanalisis.tipo!=TipoToken.RIGHT_PAREN);
+    private List<Expression> ARGUMENTS(){
+        List<Expression> argumentos = new ArrayList<>();
+        while (preanalisis.tipo != TipoToken.RIGHT_PAREN) {
+            argumentos.add(EXPRESSION());
+            if (preanalisis.tipo == TipoToken.COMMA) {
+                match(TipoToken.COMMA);
+            }
         }
-        return argumento;
+        return argumentos;
     }
     private void FUNCTIONS(){
-        if(hayErrores)
-            return;
         if(preanalisis.tipo == TipoToken.FUN){
             FUN_DECL();
             FUNCTIONS();
@@ -466,9 +463,6 @@ public class AST implements Parser{
             preanalisis = tokens.get(i);
         }
         else{
-            String message = "Error:" +  // .getLine()
-                    ". Se esperaba " + preanalisis.getTipo() +
-                    " pero se encontró " + tt;
             hayErrores=true;
         }
     }
