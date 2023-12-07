@@ -13,7 +13,10 @@ public class AST implements Parser{
         preanalisis=this.tokens.get(i);
     }
     private boolean PROGRAM(){
-        DECLARATION();
+
+        List<Statement> statements = new ArrayList<>();
+
+        DECLARATION(statements);
         if(preanalisis.tipo==TipoToken.EOF){
             System.out.println("ASDR correcto");
             return hayErrores;
@@ -22,22 +25,24 @@ public class AST implements Parser{
             return hayErrores;
         }
     }
-    private Statement DECLARATION(){
+    private void DECLARATION(List<Statement> statements){
         Statement resultado=null;
         while (true) {
             if(preanalisis.tipo==TipoToken.FUN){
                 resultado=FUN_DECL();
+                statements.add(resultado);
             }else if(preanalisis.tipo==TipoToken.VAR){
                 resultado=VAR_DECL();
+                statements.add(resultado);
             }else if(preanalisis.tipo==TipoToken.IF||preanalisis.tipo==TipoToken.FOR||
             preanalisis.tipo==TipoToken.PRINT||preanalisis.tipo==TipoToken.RETURN||
             preanalisis.tipo==TipoToken.WHILE||preanalisis.tipo==TipoToken.LEFT_BRACE){
                 resultado=STATEMENT();
+                statements.add(resultado);
             }else{
                 break;
             }
         }
-        return resultado;
     }
 
     private Statement FUN_DECL(){
@@ -223,10 +228,7 @@ public class AST implements Parser{
     private StmtBlock BLOCK(){
         match(TipoToken.LEFT_BRACE);
         List<Statement> statements=new ArrayList<>();
-        while (preanalisis.tipo!=TipoToken.RIGHT_BRACE && 
-        preanalisis.tipo!=TipoToken.EOF){
-            statements.add(DECLARATION());
-        }
+        DECLARATION(statements);
         match(TipoToken.RIGHT_BRACE);
         return new StmtBlock(statements);
     }
@@ -378,7 +380,7 @@ public class AST implements Parser{
         expr = CALL_2(expr);
         return expr;
     }
-//revisa esta parte
+//rev
     private Expression CALL_2(Expression expr){
         switch (preanalisis.tipo){
             case LEFT_PAREN:
@@ -432,7 +434,7 @@ public class AST implements Parser{
             case STRING:
                 match(TipoToken.STRING);
                 Token cadena = previous();
-                return new ExprLiteral(cadena.tipo);
+                return new ExprLiteral(cadena.literal);
             case IDENTIFIER:
                 match(TipoToken.IDENTIFIER);
                 Token id = previous();
