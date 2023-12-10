@@ -472,7 +472,6 @@ public class AST implements Parser{
 
     @Override
     public boolean parse(){
-        PROGRAM();
-        return !hayErrores;
+       return PROGRAM();
     }
 }
