@@ -15,7 +15,7 @@ public class AST implements Parser{
     private boolean PROGRAM(){
         List<Statement> statements = new ArrayList<>();
         DECLARATION(statements);
-        if(preanalisis.tipo==TipoToken.EOF){
+        if(preanalisis.tipo==TipoToken.EOF && hayErrores==false){
             System.out.println("ASDR correcto");
             return true;
         }else{
