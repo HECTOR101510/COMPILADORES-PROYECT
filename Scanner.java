@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Scanner {
-
+//mapeamso las palabras reservadas cocn sus tokens
     private static final Map<String, TipoToken> palabrasReservadas;
 
     static {
@@ -27,14 +27,14 @@ public class Scanner {
     private final String source;
 
     private final List<Token> tokens = new ArrayList<>();
-    
+    //constructor tomamos el codigo fuente
     public Scanner(String source){
         this.source = source + " ";
     }
 
 
 
-
+//escaneamos y devolvemos la lista de tokens
     public List<Token> scanTokens() {
         String lexema = "";
         int estado = 0;
@@ -209,6 +209,7 @@ public class Scanner {
                         lexema += c;
                     } else {
                         lexema += c;
+                        //vemos las cadenas pero sin tomar las comillas del final.
                         tokens.add(new Token(TipoToken.STRING, lexema, lexema.substring(1, lexema.length() - 1)));
                         estado = 0;
                         lexema = "";

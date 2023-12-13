@@ -12,15 +12,17 @@ public class AST implements Parser{
         this.tokens=tokens;
         preanalisis=this.tokens.get(i);
     }
-    private boolean PROGRAM(){
+    private List<Statement> PROGRAM(){
         List<Statement> statements = new ArrayList<>();
         DECLARATION(statements);
         if(preanalisis.tipo==TipoToken.EOF && hayErrores==false){
-            System.out.println("ASDR correcto");
-            return true;
+           // System.out.println("ASDR correcto");
+            return statements;
+            
         }else{
-            System.out.println("Error en ASTs");
-            return false;
+          //  System.out.println("Error en ASTs");
+            return null;
+            
         }
     }
     private void DECLARATION(List<Statement> statements){
@@ -34,7 +36,10 @@ public class AST implements Parser{
                 statements.add(resultado);
             }else if(preanalisis.tipo==TipoToken.IF||preanalisis.tipo==TipoToken.FOR||
             preanalisis.tipo==TipoToken.PRINT||preanalisis.tipo==TipoToken.RETURN||
-            preanalisis.tipo==TipoToken.WHILE||preanalisis.tipo==TipoToken.LEFT_BRACE){
+            preanalisis.tipo==TipoToken.WHILE||preanalisis.tipo==TipoToken.LEFT_BRACE
+            ||preanalisis.tipo==TipoToken.TRUE||preanalisis.tipo==TipoToken.FALSE||
+            preanalisis.tipo==TipoToken.NULL||preanalisis.tipo==TipoToken.NUMBER||preanalisis.tipo==TipoToken.STRING||
+            preanalisis.tipo==TipoToken.IDENTIFIER||preanalisis.tipo==TipoToken.LEFT_BRACE){
                 resultado=STATEMENT();
                 statements.add(resultado);
             }else{
@@ -71,6 +76,8 @@ public class AST implements Parser{
                 return WHILE_STMT();
             case LEFT_BRACE:
                 return BLOCK();
+                case: TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_BRACE:
+                    return STATEMENT();
             default:
                 hayErrores=true;
                 return null;
@@ -178,7 +185,7 @@ public class AST implements Parser{
            match(TipoToken.LEFT_PAREN); 
            Expression condition=EXPRESSION();
            match(TipoToken.RIGHT_PAREN); 
-           Statement body=STATEMENT();
+           Statement body=BLOCK();
            return new StmtLoop(condition, body);
     }
 
@@ -427,7 +434,7 @@ public class AST implements Parser{
             case NUMBER:
                 match(TipoToken.NUMBER);
                 Token numero = previous();
-                return new ExprLiteral(numero.tipo);
+                return new ExprLiteral(numero.literal);
             case STRING:
                 match(TipoToken.STRING);
                 Token cadena = previous();
@@ -471,7 +478,7 @@ public class AST implements Parser{
     }
 
     @Override
-    public boolean parse(){
+    public List<Statement> parse(){
        return PROGRAM();
     }
 }

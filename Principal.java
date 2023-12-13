@@ -4,6 +4,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Principal {
@@ -58,8 +59,14 @@ public class Principal {
         }
          */
         Parser parser = new AST(tokens);
-        parser.parse();
-     
+        
+        List <Statement> arbol=parser.parse();
+        //arbol=parser.parse();
+        if(arbol!=null){
+            System.out.println("Analisis AST correcto");
+        }else{
+            System.out.println("Analisis AST incorrecto");
+        }
          
     }
 }
