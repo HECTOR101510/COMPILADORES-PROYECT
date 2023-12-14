@@ -457,7 +457,7 @@ public class AST implements Parser{
         if(preanalisis.tipo==TipoToken.EQUAL){
             match(TipoToken.EQUAL);
             Token t =previous();
-            Expression tt=ASSIGNMENT();
+            Expression tt=EXPRESSION();
             exp= new ExprAssign(t, tt);
         }
         return exp;
