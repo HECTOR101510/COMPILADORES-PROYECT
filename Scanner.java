@@ -151,7 +151,7 @@ public class Scanner {
                         estado = 18;
                         lexema += c;
                     } else {
-                        tokens.add(new Token(TipoToken.NUMBER, lexema, inicioLexema +1));  //Double.valueOf(lexema)
+                        tokens.add(new Token(TipoToken.NUMBER, lexema, lexema));  //Double.valueOf(lexema)
                         estado = 0;
                         lexema = "";
                         inicioLexema=0;
@@ -172,7 +172,7 @@ public class Scanner {
                         estado = 18;
                         lexema += c;
                     } else {
-                        tokens.add(new Token(TipoToken.NUMBER, lexema, inicioLexema +1));
+                        tokens.add(new Token(TipoToken.NUMBER, lexema, lexema));
                         estado = 0;
                         lexema = "";
                         i--;

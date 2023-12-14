@@ -64,6 +64,8 @@ public class AST implements Parser{
 
     private Statement STATEMENT(){
         switch (preanalisis.tipo){
+            case  BANG, MINUS, TRUE, FALSE, NULL, NUMBER, STRING, IDENTIFIER, LEFT_PAREN:
+                return EXPR_STMT();
             case IF:
                 return IF_STMT();
             case FOR:
@@ -76,8 +78,6 @@ public class AST implements Parser{
                 return WHILE_STMT();
             case LEFT_BRACE:
                 return BLOCK();
-                case: TRUE,FALSE,NULL,NUMBER,STRING,IDENTIFIER,LEFT_BRACE:
-                    return STATEMENT();
             default:
                 hayErrores=true;
                 return null;
@@ -98,17 +98,17 @@ public class AST implements Parser{
                 Expression z=FOR_STMT_3();
                 match(TipoToken.RIGHT_PAREN);
                 Statement body= STATEMENT();
-                if(x!=null){
-                    if(z!=null){
-                        body=new StmtBlock(Arrays.asList(body,new StmtExpression(z)));
-                    }
-                    return new StmtBlock(Arrays.asList(x, new StmtLoop(y,body)));
-                }else{
-                    if(z!=null){
-                        body = new StmtBlock(Arrays.asList(body, new StmtExpression(z)));
-                    }
-                    return new StmtLoop(y, body);
+                if(z!=null){
+                    body=new StmtBlock(Arrays.asList(body,new StmtExpression(z)));
                 }
+                if(y==null){
+                    y=new ExprLiteral(true);
+                }
+                body=new StmtLoop(y, body);
+                if(x!=null){
+                    body=new StmtBlock(Arrays.asList(x,body));
+                }
+                return body;
         }
 
     private Statement FOR_STMT_1(){
@@ -185,7 +185,7 @@ public class AST implements Parser{
            match(TipoToken.LEFT_PAREN); 
            Expression condition=EXPRESSION();
            match(TipoToken.RIGHT_PAREN); 
-           Statement body=BLOCK();
+           Statement body=STATEMENT();
            return new StmtLoop(condition, body);
     }
 
@@ -208,16 +208,15 @@ public class AST implements Parser{
 
     private List<Token> PARAMETERS(){
         List<Token> parametros=new ArrayList<>();
-        while (preanalisis.tipo == TipoToken.IDENTIFIER){
+        if(preanalisis.tipo==TipoToken.IDENTIFIER){
             match(TipoToken.IDENTIFIER);
             parametros.add(previous());
-            if (preanalisis.tipo == TipoToken.COMMA) {
-                parametros=PARAMETERS_2(parametros);
-            } else {
-                break; 
-            }
+            PARAMETERS_2(parametros);
+            return parametros;
+        }else{
+            hayErrores=true;
+            return null;
         }
-        return parametros;
     }
 
     private List<Token> PARAMETERS_2(List<Token> lista){
@@ -225,6 +224,7 @@ public class AST implements Parser{
             match(TipoToken.COMMA);
             match(TipoToken.IDENTIFIER);
             lista.add(previous());
+            PARAMETERS_2(lista);
         }
         return lista;
     }

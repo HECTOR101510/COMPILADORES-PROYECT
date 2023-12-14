@@ -4,7 +4,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 public class Principal {
@@ -51,15 +50,16 @@ public class Principal {
     public static void ejecutar(String source){
        Scanner scanner= new Scanner(source);
        List<Token> tokens= scanner.scanTokens();
-       /* 
        
-        
+       
+        /* 
         for(Token token : tokens){
             System.out.println(token);
         }
          */
-        Parser parser = new AST(tokens);
         
+        
+        Parser parser = new AST(tokens);
         List <Statement> arbol=parser.parse();
         //arbol=parser.parse();
         if(arbol!=null){
