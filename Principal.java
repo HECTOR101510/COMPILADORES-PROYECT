@@ -50,19 +50,9 @@ public class Principal {
     public static void ejecutar(String source){
        Scanner scanner= new Scanner(source);
        List<Token> tokens= scanner.scanTokens();
-       
-       
-        /* 
-        for(Token token : tokens){
-            System.out.println(token);
-        }
-         */
-        
-        
         Parser parser = new AST(tokens);
-        List <Statement> arbol=parser.parse();
-        //arbol=parser.parse();
-        if(arbol!=null){
+        List <Statement> tree=parser.parse();
+        if(tree!=null){
             System.out.println("Analisis AST correcto");
         }else{
             System.out.println("Analisis AST incorrecto");

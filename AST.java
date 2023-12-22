@@ -5,7 +5,6 @@ import java.util.List;
 
 public class AST implements Parser{
     private int i = 0;
-    private boolean hayErrores = false;
     private Token preanalisis;
     private final List<Token> tokens;
     public AST(List<Token> tokens){
@@ -15,15 +14,7 @@ public class AST implements Parser{
     private List<Statement> PROGRAM(){
         List<Statement> statements = new ArrayList<>();
         DECLARATION(statements);
-        if(preanalisis.tipo==TipoToken.EOF && hayErrores==false){
-           // System.out.println("ASDR correcto");
-            return statements;
-            
-        }else{
-          //  System.out.println("Error en ASTs");
-            return null;
-            
-        }
+        return statements;
     }
     private void DECLARATION(List<Statement> statements){
         Statement resultado=null;
@@ -79,8 +70,7 @@ public class AST implements Parser{
             case LEFT_BRACE:
                 return BLOCK();
             default:
-                hayErrores=true;
-                return null;
+                throw new Error("Error de sintaxis: Se esperaba STATEMENT" + " pero se encontró " + preanalisis.tipo);
         }
     }
 
@@ -214,8 +204,7 @@ public class AST implements Parser{
             PARAMETERS_2(parametros);
             return parametros;
         }else{
-            hayErrores=true;
-            return null;
+            throw new Error("\nError de sintaxis: Se esperaba IDENTIFICADOR" + " pero se encontró " + preanalisis.tipo);
         }
     }
 
@@ -449,8 +438,9 @@ public class AST implements Parser{
                 // Tiene que ser cachado aquello que retorna
                 match(TipoToken.RIGHT_PAREN);
                 return new ExprGrouping(expr);
+            default: 
+                throw new Error("Error de sintaxis: Se esperaba STATEMENT" + " pero se encontró " + preanalisis.tipo);
         }
-        return null;
     }
 
     private Expression ASSIGNMENT_OPC(Expression exp){
@@ -468,8 +458,8 @@ public class AST implements Parser{
             i++;
             preanalisis = tokens.get(i);
         }
-        else{
-            hayErrores=true;
+        else {
+            throw new Error("Error de sintaxis: Se esperaba " + tt + " pero se encontró " + preanalisis.tipo);
         }
     }
 
